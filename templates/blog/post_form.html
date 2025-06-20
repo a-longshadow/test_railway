@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if object %}Edit Post{% else %}Create New Post{% endif %} - Django Blog
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h2 class="mb-4">
+        {% if object %}
+            <i class="bi bi-pencil"></i> Edit Post
+        {% else %}
+            <i class="bi bi-plus-circle"></i> Create New Post
+        {% endif %}
+    </h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        {% load crispy_forms_tags %}
+        {{ form|crispy }}
+    </form>
+    
+    <div class="mt-3">
+        <a href="{% url 'blog:post_list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Cancel
+        </a>
+    </div>
+</div>
+{% endblock %} 

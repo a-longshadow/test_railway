@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ post.title }} - Django Blog{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Post Content -->
+        <article class="mb-4">
+            <header class="mb-4">
+                <h1 class="mb-3">{{ post.title }}</h1>
+                <div class="post-meta mb-3">
+                    <i class="bi bi-person"></i> {{ post.author.get_full_name|default:post.author.username }}
+                    <i class="bi bi-calendar ms-2"></i> {{ post.created_at|date:"F d, Y" }}
+                    {% if post.updated_at != post.created_at %}
+                    <i class="bi bi-pencil ms-2"></i> Updated {{ post.updated_at|date:"F d, Y" }}
+                    {% endif %}
+                </div>
+                
+                {% if user == post.author %}
+                <div class="post-actions mb-3">
+                    <a href="{% url 'blog:post_edit' post.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href="{% url 'blog:post_delete' post.pk %}" class="btn btn-sm btn-outline-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </div>
+                {% endif %}
+            </header>
+            
+            <div class="post-content">
+                {{ post.content|linebreaks }}
+            </div>
+        </article>
+
+        <!-- Comments Section -->
+        <div class="comment-section">
+            <h3 class="mb-4">
+                <i class="bi bi-chat-dots"></i> Comments ({{ comments.count }})
+            </h3>
+            
+            {% if user.is_authenticated %}
+            <!-- Add Comment Form -->
+            <div class="mb-4">
+                <h5>Leave a Comment</h5>
+                <form method="post" action="{% url 'blog:add_comment' post.pk %}">
+                    {% csrf_token %}
+                    {% load crispy_forms_tags %}
+                    {{ comment_form|crispy }}
+                </form>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i>
+                <a href="{% url 'accounts:login' %}">Login</a> to leave a comment.
+            </div>
+            {% endif %}
+            
+            <!-- Display Comments -->
+            {% for comment in comments %}
+            <div class="comment">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-circle"></i> {{ comment.author.get_full_name|default:comment.author.username }}
+                    </h6>
+                    <small class="text-muted">{{ comment.created_at|date:"M d, Y H:i" }}</small>
+                </div>
+                <p class="mb-0">{{ comment.content|linebreaks }}</p>
+            </div>
+            {% empty %}
+            <p class="text-muted">No comments yet. Be the first to comment!</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">About the Author</h5>
+            </div>
+            <div class="card-body">
+                <h6>{{ post.author.get_full_name|default:post.author.username }}</h6>
+                <p class="card-text">
+                    <small class="text-muted">
+                        Member since {{ post.author.date_joined|date:"M Y" }}
+                    </small>
+                </p>
+                <p class="card-text">
+                    Posts: {{ post.author.blog_posts.count }}
+                </p>
+            </div>
+        </div>
+        
+        <div class="mt-4">
+            <a href="{% url 'blog:post_list' %}" class="btn btn-outline-primary btn-block">
+                <i class="bi bi-arrow-left"></i> Back to All Posts
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %} 
