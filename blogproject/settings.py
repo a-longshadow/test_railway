@@ -32,30 +32,43 @@ DEBUG = config('DEBUG', default=True, cast=bool)
 ENVIRONMENT = config('ENVIRONMENT', default='development')
 
 # ALLOWED_HOSTS configuration
-if ENVIRONMENT == 'production':
-    ALLOWED_HOSTS = [
-        'localhost',
-        '127.0.0.1',
-        '0.0.0.0',
-        # Railway domain will be added via environment variables
-    ]
-    # Add Railway domain from environment
-    railway_domain = config('RAILWAY_STATIC_URL', default='')
-    if railway_domain:
-        # Extract domain from Railway URL
-        import re
-        domain_match = re.search(r'https?://([^/]+)', railway_domain)
-        if domain_match:
-            ALLOWED_HOSTS.append(domain_match.group(1))
-else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+
+# Add Railway domains
+railway_public_domain = config('RAILWAY_PUBLIC_DOMAIN', default='')
+railway_static_url = config('RAILWAY_STATIC_URL', default='')
+
+if railway_public_domain:
+    ALLOWED_HOSTS.append(railway_public_domain)
+
+if railway_static_url:
+    # Extract domain from Railway URL
+    import re
+    domain_match = re.search(r'https?://([^/]+)', railway_static_url)
+    if domain_match:
+        ALLOWED_HOSTS.append(domain_match.group(1))
+
+# Also add common Railway domain patterns
+railway_domains = [
+    'postgres-production-a65db.up.railway.app',
+    '*.up.railway.app',
+    '*.railway.app'
+]
+ALLOWED_HOSTS.extend(railway_domains)
 
 # CSRF Trusted Origins for production
 CSRF_TRUSTED_ORIGINS = []
 if ENVIRONMENT == 'production':
-    railway_domain = config('RAILWAY_STATIC_URL', default='')
-    if railway_domain:
-        CSRF_TRUSTED_ORIGINS.append(railway_domain)
+    if railway_public_domain:
+        CSRF_TRUSTED_ORIGINS.append(f'https://{railway_public_domain}')
+    if railway_static_url:
+        CSRF_TRUSTED_ORIGINS.append(railway_static_url)
+    # Add common Railway URLs
+    CSRF_TRUSTED_ORIGINS.extend([
+        'https://postgres-production-a65db.up.railway.app',
+        'https://*.up.railway.app',
+        'https://*.railway.app'
+    ])
 
 # Application definition
 INSTALLED_APPS = [
