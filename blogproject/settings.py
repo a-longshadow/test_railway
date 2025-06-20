@@ -51,6 +51,7 @@ if railway_static_url:
 # Also add common Railway domain patterns
 railway_domains = [
     'postgres-production-a65db.up.railway.app',
+    'testrailway-production-904f.up.railway.app',  # New Railway domain
     '*.up.railway.app',
     '*.railway.app'
 ]
@@ -66,6 +67,7 @@ if ENVIRONMENT == 'production':
     # Add common Railway URLs
     CSRF_TRUSTED_ORIGINS.extend([
         'https://postgres-production-a65db.up.railway.app',
+        'https://testrailway-production-904f.up.railway.app',  # New Railway domain
         'https://*.up.railway.app',
         'https://*.railway.app'
     ])
