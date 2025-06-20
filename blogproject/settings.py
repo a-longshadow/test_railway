@@ -179,10 +179,20 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Static files configuration for Railway deployment
+if ENVIRONMENT == 'production':
+    # Production static files configuration
+    STATIC_ROOT = '/app/staticfiles'
+    STATICFILES_DIRS = []
+    # Ensure the directory exists
+    os.makedirs(STATIC_ROOT, exist_ok=True)
+else:
+    # Development static files configuration
+    STATICFILES_DIRS = [
+        BASE_DIR / 'static',
+    ]
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # WhiteNoise configuration for serving static files in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
