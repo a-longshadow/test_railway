@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 from pathlib import Path
 from decouple import config
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,11 +28,36 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-u++x9#uzr+=eytgdv)u8^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+# Environment detection
+ENVIRONMENT = config('ENVIRONMENT', default='development')
 
+# ALLOWED_HOSTS configuration
+if ENVIRONMENT == 'production':
+    ALLOWED_HOSTS = [
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0',
+        # Railway domain will be added via environment variables
+    ]
+    # Add Railway domain from environment
+    railway_domain = config('RAILWAY_STATIC_URL', default='')
+    if railway_domain:
+        # Extract domain from Railway URL
+        import re
+        domain_match = re.search(r'https?://([^/]+)', railway_domain)
+        if domain_match:
+            ALLOWED_HOSTS.append(domain_match.group(1))
+else:
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+
+# CSRF Trusted Origins for production
+CSRF_TRUSTED_ORIGINS = []
+if ENVIRONMENT == 'production':
+    railway_domain = config('RAILWAY_STATIC_URL', default='')
+    if railway_domain:
+        CSRF_TRUSTED_ORIGINS.append(railway_domain)
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -51,6 +77,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # For serving static files in production
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -83,16 +110,25 @@ WSGI_APPLICATION = 'blogproject.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='blogdb'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='password'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
+if ENVIRONMENT == 'production' or config('POSTGRES_LOCALLY', default=False, cast=bool):
+    # Production database configuration using dj-database-url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=config('DATABASE_URL', default='')
+        )
     }
-}
+else:
+    # Development database configuration
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='blogdb'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default='password'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
+        }
+    }
 
 
 # Password validation
@@ -134,6 +170,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# WhiteNoise configuration for serving static files in production
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Media files
 MEDIA_URL = '/media/'
