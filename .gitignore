@@ -58,8 +58,8 @@ blog_env/
 ehthumbs.db
 Thumbs.db
 
-# Static files (for production)
-/static/
+# Static files (for production only)
+# /static/  # Commented out to allow development static files
 staticfiles/
 
 # Database backups
